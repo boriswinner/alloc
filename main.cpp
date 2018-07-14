@@ -1,8 +1,11 @@
-#define BENCHPRESS_CONFIG_MAIN
-#include "benchpress/benchpress.hpp"
+#define PICOBENCH_IMPLEMENT_WITH_MAIN
+#include "picobench/picobench.hpp"
+
 #include <limits>
 #include <iostream>
 #include <vector>
+#include <vector>
+#include <cstdlib> // for rand
 
 namespace pretty_allocator {
     template<class T>
@@ -77,20 +80,111 @@ namespace pretty_allocator {
     }
 }
 
-BENCHMARK("push back std", [](benchpress::context* ctx){
-        for (size_t i = 0; i < ctx->num_iterations(); ++i) {
-            std::vector<int>a(0);
-            for (int i = 0; i < 1000; ++i){
-                a.push_back(1);
-            }
-        }
-})
+static void std_push_back(picobench::state &s)
+{
+    std::vector<int> v;
+    for (auto _ : s)
+    {
+        v.push_back(rand());
+    }
+}
+PICOBENCH(std_push_back);
 
-BENCHMARK("push back std", [](benchpress::context* ctx){
-    for (size_t i = 0; i < ctx->num_iterations(); ++i) {
-        std::vector<int>a(0);
-        for (int i = 0; i < 1000; ++i){
-            a.push_back(1);
+static void my_push_back(picobench::state &s)
+{
+    std::vector<int,pretty_allocator::allocator<int> > v;
+    for (auto _ : s)
+    {
+        v.push_back(rand());
+    }
+}
+PICOBENCH(my_push_back);
+
+static void std_reserve(picobench::state &s)
+{
+    std::vector<int> v;
+    for (auto _ : s)
+    {
+        v.reserve(100000);
+    }
+}
+PICOBENCH(std_reserve);
+
+static void my_reserve(picobench::state &s)
+{
+    std::vector<int,pretty_allocator::allocator<int> > v;
+    for (auto _ : s)
+    {
+        v.reserve(100000);
+    }
+}
+PICOBENCH(my_reserve);
+
+static void std_reserve_big(picobench::state &s)
+{
+    std::vector<int> v;
+    for (auto _ : s)
+    {
+        v.reserve(10000000);
+    }
+}
+PICOBENCH(std_reserve_big);
+
+static void my_reserve_big(picobench::state &s)
+{
+    std::vector<int,pretty_allocator::allocator<int> > v;
+    for (auto _ : s)
+    {
+        v.reserve(10000000);
+    }
+}
+PICOBENCH(my_reserve_big);
+
+static void std_clear(picobench::state &s)
+{
+    std::vector<int> v;
+    for (auto _ : s)
+    {
+        v.insert(v.begin(),10000,1);
+        v.clear();
+    }
+}
+PICOBENCH(std_clear);
+
+static void my_clear(picobench::state &s)
+{
+    std::vector<int,pretty_allocator::allocator<int> > v;
+    for (auto _ : s)
+    {
+        v.insert(v.begin(),10000,1);
+        v.clear();
+    }
+}
+PICOBENCH(my_clear);
+
+static void std_erase(picobench::state &s)
+{
+    std::vector<int> v;
+    for (auto _ : s)
+    {
+        v.insert(v.begin(),100,1);
+        for (auto it = v.begin(); it < v.end(); ++it){
+            v.erase(it);
         }
     }
-})
+}
+
+PICOBENCH(std_erase);
+
+static void my_erase(picobench::state &s)
+{
+    std::vector<int,pretty_allocator::allocator<int> > v;
+    for (auto _ : s)
+    {
+        v.insert(v.begin(),100,1);
+        for (auto it = v.begin(); it < v.end(); ++it){
+            v.erase(it);
+        }
+    }
+}
+PICOBENCH(my_erase);
